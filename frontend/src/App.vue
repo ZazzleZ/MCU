@@ -1,5 +1,18 @@
 <script setup>
+
+import { ref } from "vue";
+
 import HelloWorld from './components/HelloWorld.vue'
+import PasswordModal from './components/popups/popup.vue'
+
+const showModal = ref(false);
+
+function handleGenerate() {
+  showModal.value = false;
+  console.log("Passwort generieren...");
+  alert("Neues Passwort generiert!");
+}
+
 </script>
 
 <template>
@@ -12,6 +25,26 @@ import HelloWorld from './components/HelloWorld.vue'
     </a>
   </div>
   <HelloWorld msg="Vite + Vue" />
+  
+
+  <button @click="showModal = true">Passwort ändern</button>
+
+  <PasswordModal
+    :open="showModal"
+    text="Passwort neu generieren?"
+    username="mostafa"
+    bt1="Abbrechen"
+    bt2="Generieren"
+    type="blue"
+    @cancel="showModal = false"
+    @confirm="handleGenerate"
+  />
+
+
+
+
+
+
 </template>
 
 <style scoped>
