@@ -27,7 +27,7 @@ function handleGenerate() {
   <HelloWorld msg="Vite + Vue" />
   
 
-  <button @click="showModal = true">Passwort ändern</button>
+  <button  class="text-blue-500" @click="showModal = true">Passwort ändern</button>
 
   <PasswordModal
     :open="showModal"
