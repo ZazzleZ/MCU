@@ -11,7 +11,7 @@ const props = defineProps({
 
 <template>
     <router-link :to="'/' + props.routerLink" :key="props.text" class="w-60 h-60 border-main-blue border-2 rounded-2xl flex items-center justify-center text-grey-text 
-            hover:bg-main-blue hover:text-white cursor-pointer text-2xl font-bold">
+            hover:bg-main-blue hover:text-white cursor-pointer text-2xl">
         {{ props.text }}
     </router-link>
 </template>
