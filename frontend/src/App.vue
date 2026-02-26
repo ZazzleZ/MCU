@@ -1,5 +1,5 @@
 <script setup>
-import PopupVue from './components/PopupVue.vue'
+import PopupVue from './components/popups/PopupVue.vue'
 </script>
 <template>
 
