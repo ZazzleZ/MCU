@@ -1,4 +1,6 @@
 <script setup>
+import { RouterLink } from 'vue-router';
+
 const menuItems = [
     { name: 'Startseite', link: "startseite" },
     { name: 'Aussagenpaare', link: "aussagenpaare" },
