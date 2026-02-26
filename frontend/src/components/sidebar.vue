@@ -1,10 +1,10 @@
 <script setup>
 const menuItems = [
-    { name: 'Startseite' },
-    { name: 'Aussagenpaare' },
-    { name: 'Übungen' },
-    { name: 'Kategorien' },
-    { name: 'Admindashboard' },
+    { name: 'Startseite', link: "startseite" },
+    { name: 'Aussagenpaare', link: "aussagenpaare" },
+    { name: 'Übungen', link: "uebungen" },
+    { name: 'Kategorien', link: "kategorien" },
+    { name: 'Admindashboard', link: "admindashboard" },
 ];
 
 const email = 'max.mustermann@example.com';
@@ -21,10 +21,10 @@ const logout = () => {
             <img src="../assets/gso-logo.png" alt="gso logo">
             <nav>
                 <ul>
-                    <li v-for="item in menuItems" :key="item.name"
-                        class=" text-2xl p-5 hover:bg-hover-black rounded-md cursor-pointer">
+                    <router-link v-for="item in menuItems" :key="item.name" :to="'/' + item.link"
+                        class="flex text-2xl p-5 hover:bg-hover-black rounded-md cursor-pointer">
                         {{ item.name }}
-                    </li>
+                    </router-link>
                 </ul>
             </nav>
         </div>
