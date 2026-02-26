@@ -11,3 +11,7 @@
   --color-hover-red: #b82c2c;
   --color-grey-text: #545353;
 }
+
+body {
+    background-color: #ffffff;
+}

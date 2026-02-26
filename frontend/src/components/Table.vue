@@ -6,7 +6,14 @@ const props = defineProps({
   columns: {
     type: Array,
     required: true,
-    validator: (value) => value.every((column) => typeof column === "string"),
+    validator: (value) =>
+      value.every(
+        (column) =>
+          typeof column === "object" &&
+          column !== null &&
+          typeof column.displayName === "string" &&
+          typeof column.key === "string",
+      ),
   },
   rows: {
     type: Array,
@@ -95,7 +102,7 @@ const setAllRowsSelected = (isSelected) => {
 };
 
 const lastColumn = computed(() =>
-  props.columns.length > 0 ? props.columns[props.columns.length - 1] : "",
+  props.columns.length > 0 ? props.columns[props.columns.length - 1] : null,
 );
 </script>
 
@@ -135,9 +142,14 @@ const lastColumn = computed(() =>
               </svg>
             </label>
           </th>
-          <th v-for="column in columns" :key="column" scope="col" class="px-4 py-3">
-            <template v-if="column === lastColumn && slots.actions"></template>
-            <template v-else>{{ column }}</template>
+          <th
+            v-for="column in columns"
+            :key="column.key"
+            scope="col"
+            class="px-4 py-3"
+          >
+            <template v-if="lastColumn && column.key === lastColumn.key && slots.actions"></template>
+            <template v-else>{{ column.displayName }}</template>
           </th>
         </tr>
       </thead>
@@ -184,17 +196,21 @@ const lastColumn = computed(() =>
               </svg>
             </label>
           </td>
-          <td v-for="column in columns" :key="`${rowIndex}-${column}`" class="px-4 py-3">
+          <td
+            v-for="column in columns"
+            :key="`${rowIndex}-${column.key}`"
+            class="px-4 py-3"
+          >
             <slot
-              v-if="column === lastColumn && slots.actions"
+              v-if="lastColumn && column.key === lastColumn.key && slots.actions"
               name="actions"
               :row="row"
               :row-index="rowIndex"
             >
-              {{ row[column] ?? "" }}
+              {{ row[column.key] ?? "" }}
             </slot>
             <template v-else>
-              {{ row[column] ?? "" }}
+              {{ row[column.key] ?? "" }}
             </template>
           </td>
         </tr>
