@@ -1,0 +1,3 @@
+<template>
+    Kategorien
+</template>
