@@ -14,7 +14,7 @@ async def create_user(user: User):
 async def list_users():
     users = []
     async for doc in db["users"].find():
-        users.append({"id": str(doc["_id"]), "name": doc.get("name"), "email": doc.get("email")})
+        users.append({"id": str(doc["_id"]), "email": doc.get("email")})
     return users
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
