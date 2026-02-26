@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
-from model.user import User
-from db.mongo import db
+from app.model.user import User
+from app.db.mongo import db
 
 router = APIRouter()
 
