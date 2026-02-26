@@ -8,8 +8,10 @@
   --color-main-blue: #5b9bd5;
   --color-accent-red: #dd4d4d;
   --color-hover-black: rgba(0, 0, 0, 0.10);
+  --color-hover-blue: #5b86d5;
   --color-hover-red: #b82c2c;
   --color-grey-text: #545353;
+  --color-border-grey: #6f6e6e;
 }
 
 body {
