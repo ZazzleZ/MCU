@@ -1,3 +1,5 @@
+<!--------------------------------- Aussagepaare -------------------------------------->
+
 <template>
   <!-- Overlay -->
   <div
@@ -5,7 +7,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
   >
     <!-- Modal -->
-    <div class="w-[420px] rounded-2xl border-4 border-blue-400 bg-white p-6">
+    <div class="w-[420px] rounded-2xl border-4 border-[#538fc6]/90 bg-white p-6">
 
       <!-- Aussagen -->
       <div
@@ -21,31 +23,31 @@
             <input
               type="checkbox"
               v-model="item.correct"
-              class="h-5 w-5 accent-[#dd4d4d]"
+              class="h-5 w-5 accent-red-500"
             />
           </label>
         </div>
 
-        <div class="h-20 rounded-xl bg-[#538fc6] hover:bg-[#538fc6]/80'"></div>
+        <div class="h-20 rounded-xl bg-[#538fc6]"></div>
       </div>
 
       <!-- Kommentar -->
       <div class="mb-4">
         <div class="mb-2 font-semibold">Kommentar</div>
-        <div class="h-24 rounded-xl bg-[#538fc6] hover:bg-[#538fc6]/80'"></div>
+        <div class="h-24 rounded-xl bg-[#538fc6]"></div>
       </div>
 
       <!-- Selectors -->
       <div class="mb-6 flex justify-between">
         <button
-          class="flex items-center gap-2 rounded-lg border-2 border-blue-400 px-4 py-2 font-medium text-blue-500"
+          class="flex items-center gap-2 rounded-lg border-2 border-[#538fc6]/90 px-4 py-2 font-medium text-[#538fc6]"
           @click="$emit('select-category')"
         >
           Kategorie ⬇
         </button>
 
         <button
-          class="flex items-center gap-2 rounded-lg border-2 border-blue-400 px-4 py-2 font-medium text-blue-500"
+          class="flex items-center gap-2 rounded-lg border-2 border-[#538fc6]/90 px-4 py-2 font-medium text-[#538fc6]"
           @click="$emit('select-graphic')"
         >
           Grafik ⬆
@@ -55,14 +57,14 @@
       <!-- Footer -->
       <div class="flex justify-between">
         <button
-          class="rounded-lg bg-[#dd4d4d] hover:bg-[#b82c2c] px-6 py-2 font-semibold text-white"
+          class="rounded-lg bg-[#dd4d4d] px-6 py-2 font-semibold text-white"
           @click="close"
         >
           Abbrechen
         </button>
 
         <button
-          class="rounded-lg bg-[#538fc6] hover:bg-[#538fc6]/80  px-6 py-2 font-semibold text-white"
+          class="rounded-lg bg-[#538fc6] px-6 py-2 font-semibold text-white"
           @click="save"
         >
           Speichern

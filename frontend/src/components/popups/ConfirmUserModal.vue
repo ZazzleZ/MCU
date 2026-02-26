@@ -1,3 +1,4 @@
+
 <template>
   <div
     v-if="open"
@@ -25,7 +26,7 @@
           class="rounded-full px-8 py-3 text-lg font-medium text-white transition"
           :class="{
             'bg-[#538fc6] hover:bg-[#538fc6]/80': type === 'blue',
-            'bg-[#dd4d4d] hover:bg-[b82c2c]': type === 'red'
+            'bg-[#ff3131] hover:bg-[#ff3131]/80': type === 'red'
           }"
           @click="$emit('confirm')"
         >
