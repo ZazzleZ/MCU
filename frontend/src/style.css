@@ -13,3 +13,7 @@
   --color-grey-text: #545353;
   --color-border-grey: #6f6e6e;
 }
+
+body {
+    background-color: #ffffff;
+}

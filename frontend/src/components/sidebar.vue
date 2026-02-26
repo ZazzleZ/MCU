@@ -18,7 +18,7 @@ const logout = () => {
 
 
 <template>
-    <aside class="flex flex-col w-80 h-screen bg-main-blue text-white justify-between">
+    <aside class="flex flex-col w-80 h-screen bg-main-blue text-white justify-between shadow-[2px_0_10px_rgba(0,0,0,0.08)]">
         <div>
             <img src="../assets/gso-logo.png" alt="gso logo">
             <nav>
