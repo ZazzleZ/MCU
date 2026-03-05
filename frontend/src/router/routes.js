@@ -37,6 +37,11 @@ const routes = [
         path: 'uebungen',
         name: 'Übungen',
         component: Uebungen
+      },
+      {
+        path: 'durchfuehren/:uebungId',
+        name: 'Durchführen',
+        component: () => import('../pages/Durchfuehren.vue')
       }
     ]
   },
