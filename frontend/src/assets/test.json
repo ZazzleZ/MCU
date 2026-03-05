@@ -1,0 +1,189 @@
+{
+  "id": "aufgabe-001",
+  "aufgabenname": "Beispieluebung MCU",
+  "aussagenpaare": [
+    {
+      "id": "paar-001",
+      "aussagen": [
+        {
+          "id": "aussage-001",
+          "aussagenpaar_id": "paar-001",
+          "aussage": "Eine CPU verarbeitet Befehle sequentiell im Fetch-Decode-Execute-Zyklus.",
+          "aenderungsdatum": "2026-03-02T09:00:00Z",
+          "loesung": true
+        },
+        {
+          "id": "aussage-002",
+          "aussagenpaar_id": "paar-001",
+          "aussage": "Ein Mikrocontroller benoetigt immer ein externes RAM, um Programme auszufuehren.",
+          "aenderungsdatum": "2026-03-02T09:00:00Z",
+          "loesung": false
+        }
+      ],
+      "kategorie": [
+        "grundlagen",
+        "architektur"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/cpu-cycle.png",
+      "kommentar": "Aussage 1 ist korrekt, Aussage 2 ist falsch, da viele MCUs internes RAM besitzen."
+    },
+    {
+      "id": "paar-002",
+      "aussagen": [
+        {
+          "id": "aussage-003",
+          "aussagenpaar_id": "paar-002",
+          "aussage": "GPIO-Pins koennen als Ein- oder Ausgang konfiguriert werden.",
+          "aenderungsdatum": "2026-03-02T09:05:00Z",
+          "loesung": true
+        },
+        {
+          "id": "aussage-004",
+          "aussagenpaar_id": "paar-002",
+          "aussage": "PWM wird ausschliesslich fuer digitale UART-Kommunikation verwendet.",
+          "aenderungsdatum": "2026-03-02T09:05:00Z",
+          "loesung": false
+        }
+      ],
+      "kategorie": [
+        "peripherie",
+        "gpio"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/gpio-layout.png",
+      "kommentar": "PWM dient typischerweise zur Leistungssteuerung oder Signalmodulation, nicht exklusiv fuer UART."
+    },
+    {
+      "id": "paar-003",
+      "aussagen": [
+        {
+          "id": "aussage-005",
+          "aussagenpaar_id": "paar-003",
+          "aussage": "Ein ADC wandelt analoge Spannungen in digitale Werte um.",
+          "aenderungsdatum": "2026-03-02T09:10:00Z",
+          "loesung": true
+        },
+        {
+          "id": "aussage-006",
+          "aussagenpaar_id": "paar-003",
+          "aussage": "I2C benoetigt fuer Standardbetrieb mindestens vier Datenleitungen.",
+          "aenderungsdatum": "2026-03-02T09:10:00Z",
+          "loesung": true
+        }
+      ],
+      "kategorie": [
+        "peripherie",
+        "adc"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/adc.png",
+      "kommentar": "ADC ist korrekt beschrieben; I2C arbeitet typischerweise mit SDA und SCL."
+    },
+    {
+      "id": "paar-004",
+      "aussagen": [
+        {
+          "id": "aussage-007",
+          "aussagenpaar_id": "paar-004",
+          "aussage": "Ein Timer kann periodische Interrupts fuer zyklische Aufgaben ausloesen.",
+          "aenderungsdatum": "2026-03-02T09:15:00Z",
+          "loesung": false
+        },
+        {
+          "id": "aussage-008",
+          "aussagenpaar_id": "paar-004",
+          "aussage": "Interrupt-Service-Routinen sollten moeglichst lang und blockierend sein.",
+          "aenderungsdatum": "2026-03-02T09:15:00Z",
+          "loesung": false
+        }
+      ],
+      "kategorie": [
+        "timer",
+        "interrupt"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/timer-interrupt.png",
+      "kommentar": "Timer-Interrupts sind ueblich; ISR sollten kurz gehalten werden."
+    },
+    {
+      "id": "paar-005",
+      "aussagen": [
+        {
+          "id": "aussage-009",
+          "aussagenpaar_id": "paar-005",
+          "aussage": "SPI verwendet in der Regel Leitungen wie SCK, MOSI, MISO und CS.",
+          "aenderungsdatum": "2026-03-02T09:20:00Z",
+          "loesung": false
+        },
+        {
+          "id": "aussage-010",
+          "aussagenpaar_id": "paar-005",
+          "aussage": "UART ist ein synchrones Protokoll mit gemeinsamer Clock-Leitung.",
+          "aenderungsdatum": "2026-03-02T09:20:00Z",
+          "loesung": true
+        }
+      ],
+      "kategorie": [
+        "kommunikation",
+        "spi"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/spi-bus.png",
+      "kommentar": "SPI-Signale sind korrekt; UART ist typischerweise asynchron."
+    },
+    {
+      "id": "paar-006",
+      "aussagen": [
+        {
+          "id": "aussage-011",
+          "aussagenpaar_id": "paar-006",
+          "aussage": "Eine Pull-up-Konfiguration haelt einen Eingang ohne externes Signal auf logisch High.",
+          "aenderungsdatum": "2026-03-02T09:25:00Z",
+          "loesung": true
+        },
+        {
+          "id": "aussage-012",
+          "aussagenpaar_id": "paar-006",
+          "aussage": "Floating Inputs liefern immer stabile und reproduzierbare Pegel.",
+          "aenderungsdatum": "2026-03-02T09:25:00Z",
+          "loesung": true
+        }
+      ],
+      "kategorie": [
+        "gpio",
+        "digitaltechnik"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/pullup.png",
+      "kommentar": "Pull-ups stabilisieren Eingangspegel; Floating Inputs sind unzuverlaessig."
+    },
+    {
+      "id": "paar-007",
+      "aussagen": [
+        {
+          "id": "aussage-013",
+          "aussagenpaar_id": "paar-007",
+          "aussage": "Watchdog-Timer koennen ein System bei Software-Haengern automatisch zuruecksetzen.",
+          "aenderungsdatum": "2026-03-02T09:30:00Z",
+          "loesung": true
+        },
+        {
+          "id": "aussage-014",
+          "aussagenpaar_id": "paar-007",
+          "aussage": "Flash-Speicher ist fluechtig und verliert seinen Inhalt ohne Versorgungsspannung sofort.",
+          "aenderungsdatum": "2026-03-02T09:30:00Z",
+          "loesung": false
+        }
+      ],
+      "kategorie": [
+        "zuverlaessigkeit",
+        "speicher"
+      ],
+      "bearbeiter": "max.mustermann@schule.de",
+      "grafik_url": "https://example.com/images/watchdog.png",
+      "kommentar": "Watchdog-Reset ist korrekt; Flash ist nichtfluechtiger Speicher."
+    }
+  ],
+  "is_klausur": true
+}
