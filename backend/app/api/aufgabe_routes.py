@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
+from app.dto.aufgabe_dto import AufgabeDTO
 from app.model.aufgabe import Aufgabe
 from app.db.mongo import db
 
@@ -16,7 +17,7 @@ def convert_objectid_to_str(data):
         return data
 
 @router.post("/aufgaben")
-async def create_aufgabe(aufgabe: Aufgabe):
+async def create_aufgabe(aufgabe: AufgabeDTO):
     data = aufgabe.model_dump(exclude={"id"})
     result = await db["aufgaben"].insert_one(data)
     response = {"id": str(result.inserted_id), **data}
