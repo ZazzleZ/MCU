@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
+from app.dto.user_dto import UserDTO
 from app.model.user import User
 from app.db.mongo import db
 
@@ -16,7 +17,7 @@ def convert_objectid_to_str(data):
         return data
 
 @router.post("/users")
-async def create_user(user: User):
+async def create_user(user: UserDTO):
     data = user.model_dump(exclude={"id"})
     result = await db["users"].insert_one(data)
     response = {"id": str(result.inserted_id), **data}

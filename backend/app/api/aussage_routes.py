@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
+from app.dto.aussage_dto import AussageDTO
 from app.model.aussage import Aussage
 from app.db.mongo import db
 
@@ -16,7 +17,7 @@ def convert_objectid_to_str(data):
         return data
 
 @router.post("/aussagen")
-async def create_aussage(aussage: Aussage):
+async def create_aussage(aussage: AussageDTO):
     data = aussage.model_dump(exclude={"id"})
     result = await db["aussagen"].insert_one(data)
     response = {"id": str(result.inserted_id), **data}

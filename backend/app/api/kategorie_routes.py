@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
-from app.model.kategorie import Kategorie
+from app.dto.kategorie_dto import KategorieDTO
 from app.db.mongo import db
 
 router = APIRouter()
@@ -16,7 +16,7 @@ def convert_objectid_to_str(data):
         return data
 
 @router.post("/kategorien")
-async def create_kategorie(kategorie: Kategorie):
+async def create_kategorie(kategorie: KategorieDTO):
     data = kategorie.model_dump(exclude={"id"})
     result = await db["kategorien"].insert_one(data)
     response = {"id": str(result.inserted_id), **data}
