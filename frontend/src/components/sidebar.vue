@@ -1,5 +1,5 @@
 <script setup>
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 
 const menuItems = [
     { name: 'Startseite', link: "startseite" },
@@ -11,6 +11,17 @@ const menuItems = [
 ];
 
 const email = 'max.mustermann@example.com';
+const route = useRoute();
+
+const isItemActive = (link) => {
+    if (link === 'uebungen') {
+        return route.path.startsWith('/uebungen');
+    }
+    if (link === 'durchfuehren') {
+        return route.path.startsWith('/durchfuehren');
+    }
+    return route.path === `/${link}`;
+};
 
 const logout = () => {
     alert('Abgemeldet!');
@@ -25,7 +36,10 @@ const logout = () => {
             <nav>
                 <ul>
                     <router-link v-for="item in menuItems" :key="item.name" :to="'/' + item.link"
-                        class="flex text-2xl p-5 hover:bg-hover-black rounded-md cursor-pointer">
+                        :class="[
+                            'flex text-2xl p-5 rounded-md cursor-pointer transition',
+                            isItemActive(item.link) ? 'bg-hover-black font-semibold' : 'hover:bg-hover-black'
+                        ]">
                         {{ item.name }}
                     </router-link>
                 </ul>
