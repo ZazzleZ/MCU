@@ -46,7 +46,7 @@
       <!-- Kategorie Auswahl -->
       <div class="mb-4">
         <label class="font-semibold">Kategorie</label>
-        <select v-model="kategorie" class="w-full p-2 border rounded-xl">
+        <select v-model="kategorie" class="w-full cursor-pointer p-2 border rounded-xl">
           <option disabled value="">Bitte auswählen</option>
           <option v-for="cat in kategorien" :key="cat.id" :value="cat.name">
             {{ cat.name }}
