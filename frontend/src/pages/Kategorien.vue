@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import Table from "../components/Table.vue";
+import AddKategorieModal from "./Kategorien/AddKategorieModal.vue";
 import KategorieDeleteConfirmModal from "./Kategorien/KategorieDeleteConfirmModal.vue";
 
 const router = useRouter();
@@ -21,9 +22,6 @@ const showAddKategorieModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const deleteMode = ref("single");
 const rowToDelete = ref(null);
-const kategorienameInput = ref("");
-const createKategorieError = ref("");
-const isCreatingKategorie = ref(false);
 
 const filteredRows = computed(() => {
   const query = appliedSearchText.value.trim().toLowerCase();
@@ -62,57 +60,12 @@ const loadKategorien = async () => {
 };
 
 const openAddKategorieModal = () => {
-  createKategorieError.value = "";
-  kategorienameInput.value = "";
   showAddKategorieModal.value = true;
 };
 
-const closeAddKategorieModal = () => {
+const handleKategorieCreated = async () => {
   showAddKategorieModal.value = false;
-  createKategorieError.value = "";
-  kategorienameInput.value = "";
-};
-
-const createKategorie = async () => {
-  const kategoriename = kategorienameInput.value.trim();
-  if (!kategoriename) {
-    createKategorieError.value = "Bitte einen Kategorienamen eingeben.";
-    return;
-  }
-
-  isCreatingKategorie.value = true;
-  createKategorieError.value = "";
-
-  try {
-    const response = await fetch("http://localhost:8000/kategorien", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: kategoriename,
-        aussagenpaare: [],
-      }),
-    });
-
-    if (!response.ok) {
-      let message = `Kategorie konnte nicht erstellt werden (${response.status})`;
-      try {
-        const errorBody = await response.json();
-        if (errorBody?.detail) {
-          message = typeof errorBody.detail === "string" ? errorBody.detail : message;
-        }
-      } catch {
-        // ignore json parse errors for non-json responses
-      }
-      throw new Error(message);
-    }
-
-    closeAddKategorieModal();
-    await loadKategorien();
-  } catch (error) {
-    createKategorieError.value = error?.message ?? "Unbekannter Fehler beim Erstellen.";
-  } finally {
-    isCreatingKategorie.value = false;
-  }
+  await loadKategorien();
 };
 
 const openDeleteSelectedRowsModal = () => {
@@ -277,49 +230,10 @@ onMounted(() => {
       </template>
     </Table>
 
-    <div
-      v-if="showAddKategorieModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-    >
-      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h2 class="mb-4 text-lg font-semibold text-grey-text">Kategorie erstellen</h2>
-
-        <label for="kategoriename-input" class="mb-1 block text-sm font-medium text-grey-text">
-          Kategoriename
-        </label>
-        <input
-          id="kategoriename-input"
-          v-model="kategorienameInput"
-          type="text"
-          class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500"
-          placeholder="Kategoriename eingeben..."
-          @keyup.enter="createKategorie"
-        />
-
-        <p v-if="createKategorieError" class="mt-2 text-sm text-accent-red">
-          {{ createKategorieError }}
-        </p>
-
-        <div class="mt-5 flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-xl border border-accent-red bg-accent-red px-4 py-2 text-sm font-semibold text-white transition hover:bg-hover-red"
-            @click="closeAddKategorieModal"
-            :disabled="isCreatingKategorie"
-          >
-            Abbrechen
-          </button>
-          <button
-            type="button"
-            class="rounded-xl border border-main-blue bg-main-blue px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-            @click="createKategorie"
-            :disabled="isCreatingKategorie"
-          >
-            Erstellen
-          </button>
-        </div>
-      </div>
-    </div>
+    <AddKategorieModal
+      v-model="showAddKategorieModal"
+      @created="handleKategorieCreated"
+    />
 
     <KategorieDeleteConfirmModal
       v-model="showDeleteConfirmModal"
