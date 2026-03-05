@@ -25,8 +25,10 @@ async def create_kategorie(kategorie: KategorieDTO):
 @router.get("/kategorien")
 async def list_kategorien():
     kategorien = []
-    async for doc in db["kategorien"].find():
-        kategorien.append({"id": str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"}})
+    async for doc in db["kategorien"].find({}):
+        kategorien.append(
+            {"id": str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"}}
+        )
     return convert_objectid_to_str(kategorien)
 
 @router.delete("/kategorien/{kategorie_id}", status_code=status.HTTP_204_NO_CONTENT)
