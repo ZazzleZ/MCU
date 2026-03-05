@@ -214,7 +214,3 @@ function getOptionsBy(field) {
 
     </div>
 </template>
-
-
-
-
