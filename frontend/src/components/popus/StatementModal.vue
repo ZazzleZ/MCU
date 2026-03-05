@@ -7,8 +7,9 @@
         <div
           :class="[
             'rounded-xl px-4 py-3 text-sm',
-            feedback.type === 'success' ? 'bg-green-50 text-green-700 border border-green-300' : '',
-            feedback.type === 'error' ? 'bg-red-50 text-red-700 border border-red-300' : ''
+            feedback.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-300'
+              : 'bg-red-50 text-red-700 border border-red-300'
           ]"
         >
           {{ feedback.message }}
@@ -19,7 +20,6 @@
       <div v-for="(item, index) in localStatements" :key="index" class="mb-4">
         <div class="mb-2 flex items-center justify-between font-semibold">
           <span>Aussage {{ index + 1 }}</span>
-
           <label class="flex items-center gap-2">
             korrekt?
             <input type="checkbox" v-model="item.correct" class="h-5 w-5 accent-red-500" />
@@ -28,7 +28,7 @@
 
         <textarea
           v-model="item.text"
-          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black placeholder:text-gray-500/70"
+          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black"
           placeholder="Hier kannst du deine Aussage hinzufügen..."
         ></textarea>
       </div>
@@ -38,7 +38,7 @@
         <div class="mb-2 font-semibold">Kommentar</div>
         <textarea
           v-model="kommentar"
-          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black placeholder:text-gray-500/70"
+          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black"
           placeholder="Hier kannst du einen Kommentar hinzufügen..."
         ></textarea>
       </div>
@@ -48,17 +48,23 @@
         <label class="font-semibold">Kategorie</label>
         <select v-model="kategorie" class="w-full cursor-pointer p-2 border rounded-xl">
           <option disabled value="">Bitte auswählen</option>
-          <option v-for="cat in kategorien" :key="cat.id" :value="cat.name">
+          <option v-for="cat in kategorien" :key="cat.id" :value="cat.id">
             {{ cat.name }}
           </option>
         </select>
+
+        <div v-if="!kategorien.length" class="mt-1 text-xs text-gray-500">
+          (Keine Kategorien geladen – bitte Backend prüfen)
+        </div>
       </div>
 
       <!-- Grafik Upload -->
       <div class="mb-4">
         <label class="font-semibold">Grafik</label>
-        <input type="file" @change="uploadGraphic" />
-        <div v-if="grafik_url" class="mt-2 text-xs text-gray-500 truncate">Gespeichert: {{ grafik_url }}</div>
+        <input type="file" accept="image/*" @change="uploadGraphic" />
+        <div v-if="grafik_url" class="mt-2 text-xs text-gray-500 truncate">
+          Gespeichert: {{ grafik_url }}
+        </div>
       </div>
 
       <!-- Footer -->
@@ -88,109 +94,190 @@
 import { reactive, ref, onMounted } from "vue";
 
 const props = defineProps({
-  modelValue: { type: Boolean, required: true },
-  statements: {
-    type: Array,
-    default: () => [{ correct: false, text: "" }, { correct: false, text: "" }]
-  }
+  modelValue: Boolean,
+  statements: Array
 });
+const emit = defineEmits(["update:modelValue", "save", "saved"]);
 
-const emit = defineEmits(["update:modelValue", "save", "saved"]); // "saved" = optionales Erfolgs-Event
+const API_BASE = "http://127.0.0.1:8000";
 
-// lokale Kopie
+/* ------------------------------
+   Lokale reactive Aussagenliste
+--------------------------------*/
 const localStatements = reactive(
-  JSON.parse(JSON.stringify(props.statements)).map(s => ({ text: s.text || "", correct: !!s.correct }))
+  JSON.parse(JSON.stringify(props.statements)).map(s => ({
+    text: s.text || "",
+    correct: !!s.correct
+  }))
 );
 
+/* ------------------------------
+   Form-States
+--------------------------------*/
 const kommentar = ref("");
 const kategorie = ref("");
 const grafik_url = ref(localStorage.getItem("uploadedGraphic") || "");
 const kategorien = ref([]);
 
 const saving = ref(false);
-const feedback = reactive({ type: "", message: "" }); // type: 'success' | 'error'
+const feedback = reactive({ type: "", message: "" });
 
-// Kategorien laden
+/* ------------------------------
+   Hilfsfunktion für POST
+--------------------------------*/
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {}
+
+  if (!res.ok) {
+    const msg =
+      data?.detail ||
+      data?.message ||
+      `Fehler (HTTP ${res.status})`;
+
+    throw new Error(msg);
+  }
+
+  return data;
+}
+
+/* ------------------------------
+   Kategorien beim Start laden
+--------------------------------*/
 onMounted(async () => {
   try {
-    const res = await fetch("http://127.0.0.1:8000/kategorien");
-    console.log("Kategorien geladen:", res);
-    if (!res.ok) throw new Error(`Kategorien konnten nicht geladen werden (${res.status})`);
+    const res = await fetch(`${API_BASE}/kategorien`);
     kategorien.value = await res.json();
-  } catch (e) {
-    feedback.type = "error";
-    feedback.message = e.message || "Fehler beim Laden der Kategorien.";
+  } catch (err) {
+    console.error("Fehler beim Laden der Kategorien:", err);
   }
 });
 
-// Grafik Upload → URL speichern (hier als Blob-URL + LocalStorage, alternativ: echter Upload an Backend)
-function uploadGraphic(event) {
-  const file = event.target.files[0];
+/* ------------------------------
+   Grafik Vorschau & Speicherung
+--------------------------------*/
+function uploadGraphic(evt) {
+  const file = evt.target.files[0];
   if (!file) return;
+
   const url = URL.createObjectURL(file);
   grafik_url.value = url;
   localStorage.setItem("uploadedGraphic", url);
 }
 
+/* ------------------------------
+   Modal schließen
+--------------------------------*/
 const close = () => emit("update:modelValue", false);
 
-async function save() {
-  feedback.type = "";
-  feedback.message = "";
+/* ------------------------------
+   SPEICHERN: Paar + Aussagen
+// --------------------------------*/
 
-  // einfache Validierung
+
+
+
+// ... dein bestehender Code oben bleibt unverändert ...
+
+// const STATEMENTS_ENDPOINT = `${API_BASE}/aussage`; 
+// Falls dein Backend den pluralen Endpoint nutzt, einfach so ändern:
+ const STATEMENTS_ENDPOINT = `${API_BASE}/aussagen`;
+
+async function save() {
+  feedback.message = "";
+  feedback.type = "";
+
+  // Validierungen
   if (!kategorie.value) {
     feedback.type = "error";
     feedback.message = "Bitte eine Kategorie auswählen.";
     return;
   }
-  if (localStatements.some(s => !s.text?.trim())) {
+
+  if (localStatements.some(s => !s.text.trim())) {
     feedback.type = "error";
     feedback.message = "Bitte alle Aussagen ausfüllen.";
     return;
   }
 
-  const payload = {
-    aussagen: localStatements.map((s, idx) => ({
-      id: `${Date.now()}-${idx}`,     // falls Backend ID generiert, kannst du das weglassen
-      aussage: s.text,
-      loesung: !!s.correct
-    })),
-    kategorie: [kategorie.value],      // dein Backend erwartet eine Liste
+  saving.value = true;
+
+  // 1) Aussagen (lokal) vorbereiten
+  const nowIso = new Date().toISOString();
+  const preparedStatements = localStatements.map(s => ({
+    aussage: s.text.trim(),
+    loesung: !!s.correct,
+    aenderungsdatum: nowIso
+  }));
+
+  // 2) Payload für das Paar (MIT Aussagen)
+  const pairPayload = {
+    aussagen: preparedStatements, // <-- jetzt mit Aussagen
+    kategorie: [kategorie.value],
     bearbeiter: "Mostafa",
-    grafik_url: grafik_url.value || "",
-    kommentar: kommentar.value || ""
+    grafik_url: grafik_url.value,
+    kommentar: kommentar.value
   };
 
-  saving.value = true;
   try {
-    const res = await fetch("http://localhost:8000/aussagepaare", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    /* -------- 1. Aussagenpaar speichern -------- */
+    const pairData = await postJson(
+      `${API_BASE}/aussagenpaare`,
+      pairPayload
+    );
 
-    // Versuche Fehlermeldung vom Backend sauber anzuzeigen
-    let data = null;
-    try { data = await res.json(); } catch {}
-
-    if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) || `Speichern fehlgeschlagen (HTTP ${res.status}).`;
-      throw new Error(msg);
+    const pairId = pairData.id;
+    if (!pairId) {
+      throw new Error("Fehlende ID des gespeicherten Aussagenpaars.");
     }
 
-    // Erfolg
+    /* -------- 2. Aussagen speichern (nachdem Paar existiert) -------- */
+    const results = await Promise.allSettled(
+      preparedStatements.map(s =>
+        postJson(STATEMENTS_ENDPOINT, {
+          aussagenpaar_id: pairId,
+          aussage: s.aussage,
+          loesung: s.loesung,
+          aenderungsdatum: s.aenderungsdatum
+        })
+      )
+    );
+
+    // Prüfen ob Fehler bei einer Aussage
+    const rejected = results.find(r => r.status === "rejected");
+    if (rejected) {
+      // Paar zurückrollen, damit keine verwaisten Datensätze entstehen
+      try {
+        await fetch(`${API_BASE}/aussagenpaare/${pairId}`, { method: "DELETE" });
+      } catch {
+        // Falls Rollback fehlschlägt, trotzdem originalen Fehler anzeigen
+      }
+      throw new Error(
+        rejected.reason?.message || "Eine Aussage konnte nicht gespeichert werden."
+      );
+    }
+
+    /* -------- Erfolg -------- */
     feedback.type = "success";
     feedback.message = "Erfolgreich gespeichert.";
-    emit("save", payload);  // falls Elternkomponente noch etwas braucht
-    emit("saved", data || payload);
 
-    // Modal nach kurzer Zeit schließen (anpassbar)
-    setTimeout(() => close(), 900);
+    emit("saved", {
+      pair: pairData,
+      statements: results.map(r => r.value) // Rückgaben der Einzel-POSTs
+    });
 
+    setTimeout(close, 900);
   } catch (err) {
     feedback.type = "error";
-    feedback.message = err?.message || "Unbekannter Fehler beim Speichern.";
+    feedback.message = err.message || "Unbekannter Fehler beim Speichern.";
   } finally {
     saving.value = false;
   }
