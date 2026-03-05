@@ -37,6 +37,16 @@ const routes = [
         path: 'uebungen',
         name: 'Übungen',
         component: Uebungen
+      },
+      {
+        path: 'uebungen/:uebungId',
+        name: 'UebungDetail',
+        component: () => import('../pages/uebung.vue')
+      },
+      {
+        path: 'durchfuehren/:uebungId',
+        name: 'Durchführen',
+        component: () => import('../pages/Durchfuehren.vue')
       }
     ]
   },
@@ -53,3 +63,4 @@ const router = createRouter({
 })
 
 export default router
+
