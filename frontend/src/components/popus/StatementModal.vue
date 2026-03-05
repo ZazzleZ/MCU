@@ -28,7 +28,7 @@
 
         <textarea
           v-model="item.text"
-          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-white placeholder:text-gray-500/70"
+          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black placeholder:text-gray-500/70"
           placeholder="Hier kannst du deine Aussage hinzufügen..."
         ></textarea>
       </div>
@@ -38,7 +38,7 @@
         <div class="mb-2 font-semibold">Kommentar</div>
         <textarea
           v-model="kommentar"
-          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-white placeholder:text-gray-500/70"
+          class="h-24 w-full rounded-xl border-2 border-[#538fc6]/90 bg-white p-3 text-black placeholder:text-gray-500/70"
           placeholder="Hier kannst du einen Kommentar hinzufügen..."
         ></textarea>
       </div>
@@ -113,7 +113,8 @@ const feedback = reactive({ type: "", message: "" }); // type: 'success' | 'erro
 // Kategorien laden
 onMounted(async () => {
   try {
-    const res = await fetch("http://localhost:8000/kategories");
+    const res = await fetch("http://127.0.0.1:8000/kategorien");
+    console.log("Kategorien geladen:", res);
     if (!res.ok) throw new Error(`Kategorien konnten nicht geladen werden (${res.status})`);
     kategorien.value = await res.json();
   } catch (e) {
