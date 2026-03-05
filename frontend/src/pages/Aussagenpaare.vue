@@ -1,18 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script setup>
 import { computed, ref } from "vue";
 import Table from "../components/Table.vue";
