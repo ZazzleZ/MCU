@@ -1,6 +1,6 @@
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import Table from "../components/Table.vue";
 import StatementModal from "../components/popus/StatementModal.vue"; // 👈 NEU
@@ -9,11 +9,7 @@ const route = useRoute();
 
 const columns = [{ displayName: "Kategorie", key: "kategorie" }, { displayName: "Aussage 1", key: "aussage_eins" }, { displayName: "Aussage 2", key: "aussage_zwei" }, { displayName: "Kommentar", key: "kommentar" }, { displayName: "Grafik", key: "grafik_url" }, { displayName: "", key: "actions" }];
 
-const allRows = ref([
-    { id: 1, kategorie: "Allgemein", aussage_eins: "Allgemein", aussage_zwei: "", bearbeiter: "Aktiv", grafik_url: "", kommentar: "" },
-    { id: 2, kategorie: "Wasser friert bei 0 C.", aussage_eins: "Wissenschaft", aussage_zwei: "Allgemein", bearbeiter: "Aktiv", grafik_url: "", kommentar: "" },
-    { id: 3, kategorie: "Die Erde ist flach.", aussage_eins: "Mythos", aussage_zwei: "Allgemein", bearbeiter: "Inaktiv", grafik_url: "", kommentar: "" },
-]);
+const allRows = ref([]);
 
 const selectedRows = ref([]);
 const selectedKategorie = ref("");
@@ -36,7 +32,11 @@ const handleSave = (data) => {
 
 const filteredRows = computed(() =>
     allRows.value.filter((row) => {
-        const matchesKategorie = !selectedKategorie.value || row.kategorie === selectedKategorie.value;
+        const kategorien = String(row.kategorie ?? "")
+            .split(",")
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+        const matchesKategorie = !selectedKategorie.value || kategorien.includes(selectedKategorie.value);
         const matchesBearbeiter = !selectedBearbeiter.value || row.bearbeiter === selectedBearbeiter.value;
         return matchesKategorie && matchesBearbeiter;
     }),
@@ -46,10 +46,52 @@ const editRow = (row) => {
     console.log("Edit row:", row);
 };
 
-const deleteRow = (row) => {
-    allRows.value = allRows.value.filter((item) => item.id !== row.id);
-    selectedRows.value = selectedRows.value.filter((item) => item.id !== row.id);
+const deleteRow = async (row) => {
+    try {
+        const response = await fetch(`http://localhost:8000/aussagenpaare/${row.id}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Fehler beim Loeschen des Aussagenpaars (${response.status})`);
+        }
+
+        allRows.value = allRows.value.filter((item) => item.id !== row.id);
+        selectedRows.value = selectedRows.value.filter((item) => item.id !== row.id);
+    } catch (error) {
+        console.error("Aussagenpaar konnte nicht geloescht werden:", error);
+    }
 };
+
+onMounted(async () => {
+    try {
+        const response = await fetch("http://localhost:8000/aussagenpaare");
+        if (!response.ok) {
+            throw new Error(`Fehler beim Laden der Aussagenpaare (${response.status})`);
+        }
+
+        const data = await response.json();
+        allRows.value = Array.isArray(data)
+            ? data.map((item) => {
+                const aussagen = Array.isArray(item.aussagen) ? item.aussagen : [];
+                const kategorien = Array.isArray(item.kategorie) ? item.kategorie : [];
+
+                return {
+                    id: item.id,
+                    kategorie: kategorien.join(", "),
+                    aussage_eins: aussagen[0]?.aussage ?? "",
+                    aussage_zwei: aussagen[1]?.aussage ?? "",
+                    bearbeiter: item.bearbeiter ?? "",
+                    grafik_url: item.grafik_url ?? "",
+                    kommentar: item.kommentar ?? "",
+                };
+            })
+            : [];
+    } catch (error) {
+        console.error("Aussagenpaare konnten nicht geladen werden:", error);
+        allRows.value = [];
+    }
+});
 
 watch(
     () => route.query.kategorie,
@@ -61,9 +103,20 @@ watch(
 function getOptionsBy(field) {
     const options = new Set();
     allRows.value.forEach((row) => {
-        if (row[field]) {
-            options.add(row[field]);
+        if (!row[field]) {
+            return;
         }
+
+        if (field === "kategorie") {
+            row[field]
+                .split(",")
+                .map((entry) => entry.trim())
+                .filter(Boolean)
+                .forEach((entry) => options.add(entry));
+            return;
+        }
+
+        options.add(row[field]);
     });
     return Array.from(options);
 }
