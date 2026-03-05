@@ -1,21 +1,39 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import Table from "../components/Table.vue";
+import BenutzerAnlegenModel from "../components/popus/BenutzerAnlegenModel.vue";
+
+onMounted(() => {
+  fetchUser()
+})
+
+const fetchUser = async () => {
+  try {
+    const response = await fetch("http://localhost:8000/users") // GET Request
+    if (!response.ok) throw new Error("Fehler beim Laden der User")
+
+    const data = await response.json()
+    allRows.value = data       // Array mit Userdaten füllen
+    console.log("User geladen:", allRows.value)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    
+  }
+}
 
 const columns = [
   { displayName: "Email", key: "email" },
   { displayName: "", key: "actions" },
 ];
 
-const allRows = ref([
-  { id: 1, email: "max.mustermann@example.com" },
-  { id: 2, email: "erika.musterfrau@example.com" },
-  { id: 3, email: "admin@example.com" },
-]);
+const allRows = ref([]);
 
 const selectedRows = ref([]);
 const searchInput = ref("");
 const appliedSearchText = ref("");
+
+let showAddUserPopup = ref(false);
 
 const filteredRows = computed(() =>
   allRows.value.filter((row) => {
@@ -28,27 +46,90 @@ const applySearch = () => {
   appliedSearchText.value = searchInput.value;
 };
 
-const addUser = () => {
-  console.log("Benutzer hinzufuegen");
+const addUserButton = () => {
+  showAddUserPopup.value = true;
 };
 
-const resetUser = (row) => {
-  console.log("Benutzer zuruecksetzen:", row);
+const resetUser = async (row) => {
+  try {
+    const response = await fetch(`http://localhost:8000/users/${row.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({  
+        id: row.id,
+        email: row.email,
+        password: row.password,
+        is_admin: row.is_admin,
+        needs_pw_change: true
+      }),
+    });
+
+    if (!response.ok) throw new Error("Fehler beim Setzen von 'needs_pw_change'");
+
+    // Frontend aktualisieren
+    const updatedUser = await response.json();
+    allRows.value = allRows.value.map((item) =>
+      item.id === updatedUser.id ? updatedUser : item
+    );
+
+    console.log(`Benutzer ${row.email} muss nun Passwort ändern`);
+  } catch (err) {
+    console.error(err);
+    alert("Fehler beim Aktualisieren des Benutzers");
+  }
 };
 
 const deleteRow = (row) => {
-  allRows.value = allRows.value.filter((item) => item.id !== row.id);
-  selectedRows.value = selectedRows.value.filter((item) => item.id !== row.id);
+  if (!confirm(`Benutzer ${row.email} wirklich löschen?`)) return;
+  deleteUser(row)
 };
 
 const deleteSelectedRows = () => {
+  if (!confirm(`wirklich alle löschen?`)) return;
+  for (const row of selectedRows.value) {
+    deleteUser(row)
+  }
+
   const selectedIds = new Set(selectedRows.value.map((row) => row.id));
   allRows.value = allRows.value.filter((item) => !selectedIds.has(item.id));
   selectedRows.value = [];
 };
+
+const confirmAddUser = () => {
+  console.log("Confirm")
+  showAddUserPopup.value = false
+  fetchUser()
+}
+
+const cancelAddUser = () => {
+  console.log("Cancel")
+  showAddUserPopup.value = false
+}
+
+const deleteUser = async (row) => {
+  try {
+    const response = await fetch(`http://localhost:8000/users/${row.id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Fehler beim Löschen des Benutzers");
+
+    // Frontend aktualisieren
+    allRows.value = allRows.value.filter((item) => item.id !== row.id);
+    selectedRows.value = selectedRows.value.filter((item) => item.id !== row.id);
+
+    console.log(`Benutzer ${row.email} gelöscht`);
+  } catch (err) {
+    console.error(err);
+    alert("Fehler beim Löschen des Benutzers");
+  }
+};
 </script>
 
 <template>
+  <BenutzerAnlegenModel v-if="showAddUserPopup" @confirm="confirmAddUser" @cancel="cancelAddUser" />
   <div class="m-15 flex flex-col gap-10 text-grey-text">
     <div class="flex flex-row justify-between gap-5">
       <div class="flex margin-bottom-20 gap-2">
@@ -80,7 +161,7 @@ const deleteSelectedRows = () => {
           class="inline-flex size-10.5 items-center justify-center text-xl cursor-pointer rounded-xl border border-main-blue bg-main-blue font-semibold text-white transition hover:brightness-95"
           aria-label="Benutzer hinzufuegen"
           title="Benutzer hinzufuegen"
-          @click="addUser"
+          @click="addUserButton"
         >
           +
         </button>
