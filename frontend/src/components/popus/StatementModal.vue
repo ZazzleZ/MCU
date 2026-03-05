@@ -180,7 +180,17 @@ const close = () => emit("update:modelValue", false);
 
 /* ------------------------------
    SPEICHERN: Paar + Aussagen
---------------------------------*/
+// --------------------------------*/
+
+
+
+
+// ... dein bestehender Code oben bleibt unverändert ...
+
+// const STATEMENTS_ENDPOINT = `${API_BASE}/aussage`; 
+// Falls dein Backend den pluralen Endpoint nutzt, einfach so ändern:
+ const STATEMENTS_ENDPOINT = `${API_BASE}/aussagen`;
+
 async function save() {
   feedback.message = "";
   feedback.type = "";
@@ -200,9 +210,17 @@ async function save() {
 
   saving.value = true;
 
-  // Payload für das Paar (ohne Aussagen)
+  // 1) Aussagen (lokal) vorbereiten
+  const nowIso = new Date().toISOString();
+  const preparedStatements = localStatements.map(s => ({
+    aussage: s.text.trim(),
+    loesung: !!s.correct,
+    aenderungsdatum: nowIso
+  }));
+
+  // 2) Payload für das Paar (MIT Aussagen)
   const pairPayload = {
-    aussagen: [],
+    aussagen: preparedStatements, // <-- jetzt mit Aussagen
     kategorie: [kategorie.value],
     bearbeiter: "Mostafa",
     grafik_url: grafik_url.value,
@@ -217,27 +235,34 @@ async function save() {
     );
 
     const pairId = pairData.id;
+    if (!pairId) {
+      throw new Error("Fehlende ID des gespeicherten Aussagenpaars.");
+    }
 
-    /* -------- 2. Aussagen speichern -------- */
-    const nowIso = new Date().toISOString();
-
+    /* -------- 2. Aussagen speichern (nachdem Paar existiert) -------- */
     const results = await Promise.allSettled(
-      localStatements.map(s =>
-        postJson(`${API_BASE}/aussagen`, {
+      preparedStatements.map(s =>
+        postJson(STATEMENTS_ENDPOINT, {
           aussagenpaar_id: pairId,
-          aussage: s.text,
-          loesung: s.correct,
-          aenderungsdatum: nowIso
+          aussage: s.aussage,
+          loesung: s.loesung,
+          aenderungsdatum: s.aenderungsdatum
         })
       )
     );
 
     // Prüfen ob Fehler bei einer Aussage
-    if (results.some(r => r.status === "rejected")) {
-      await fetch(`${API_BASE}/aussagenpaare/${pairId}`, {
-        method: "DELETE"
-      });
-      throw new Error("Eine Aussage konnte nicht gespeichert werden.");
+    const rejected = results.find(r => r.status === "rejected");
+    if (rejected) {
+      // Paar zurückrollen, damit keine verwaisten Datensätze entstehen
+      try {
+        await fetch(`${API_BASE}/aussagenpaare/${pairId}`, { method: "DELETE" });
+      } catch {
+        // Falls Rollback fehlschlägt, trotzdem originalen Fehler anzeigen
+      }
+      throw new Error(
+        rejected.reason?.message || "Eine Aussage konnte nicht gespeichert werden."
+      );
     }
 
     /* -------- Erfolg -------- */
@@ -246,13 +271,13 @@ async function save() {
 
     emit("saved", {
       pair: pairData,
-      statements: results.map(r => r.value)
+      statements: results.map(r => r.value) // Rückgaben der Einzel-POSTs
     });
 
     setTimeout(close, 900);
   } catch (err) {
     feedback.type = "error";
-    feedback.message = err.message;
+    feedback.message = err.message || "Unbekannter Fehler beim Speichern.";
   } finally {
     saving.value = false;
   }
