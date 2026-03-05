@@ -122,7 +122,7 @@ const deleteSelectedRows = () => {
           <select
             id="kategorie-select"
             v-model="selectedKategorie"
-            class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
+            class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
           >
             <option value="">Alle Kategorien</option>
             <option v-for="option in kategorienOptions" :key="option" :value="option">{{ option }}</option>
@@ -137,7 +137,7 @@ const deleteSelectedRows = () => {
           <select
             id="bearbeiter-select"
             v-model="selectedBearbeiter"
-            class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
+            class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
           >
             <option value="">Alle Bearbeiter</option>
             <option v-for="option in bearbeiterOptions" :key="option" :value="option">{{ option }}</option>

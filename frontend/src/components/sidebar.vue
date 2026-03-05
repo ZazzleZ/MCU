@@ -7,7 +7,6 @@ const menuItems = [
     { name: 'Übungen', link: "uebungen" },
     { name: 'Kategorien', link: "kategorien" },
     { name: 'Admindashboard', link: "admindashboard" },
-    { name: 'Durchführen', link: "durchfuehren" }
 ];
 
 const email = 'max.mustermann@example.com';
