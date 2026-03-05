@@ -146,7 +146,10 @@ const lastColumn = computed(() =>
             v-for="column in columns"
             :key="column.key"
             scope="col"
-            class="px-4 py-3"
+            :class="[
+              'px-4 py-3',
+              lastColumn && column.key === lastColumn.key && slots.actions ? 'w-px whitespace-nowrap' : '',
+            ]"
           >
             <template v-if="lastColumn && column.key === lastColumn.key && slots.actions"></template>
             <template v-else>{{ column.displayName }}</template>
@@ -199,7 +202,10 @@ const lastColumn = computed(() =>
           <td
             v-for="column in columns"
             :key="`${rowIndex}-${column.key}`"
-            class="px-4 py-3"
+            :class="[
+              'px-4 py-3',
+              lastColumn && column.key === lastColumn.key && slots.actions ? 'w-px whitespace-nowrap' : '',
+            ]"
           >
             <slot
               v-if="lastColumn && column.key === lastColumn.key && slots.actions"
