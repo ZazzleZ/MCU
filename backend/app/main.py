@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.users_routes import router as users_router
 from app.api.aussage_routes import router as aussage_router
 from app.api.aussagenpaar_routes import router as aussagenpaar_router
@@ -7,6 +8,13 @@ from app.api.kategorie_routes import router as kategorie_router
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1/"], 
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"],
+)
 app.include_router(users_router)
 app.include_router(aussage_router)
 app.include_router(aussagenpaar_router)
