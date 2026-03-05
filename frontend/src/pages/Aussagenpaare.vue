@@ -1,13 +1,16 @@
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import Table from "../components/Table.vue";
 import StatementModal from "../components/popus/StatementModal.vue"; // 👈 NEU
+
+const route = useRoute();
 
 const columns = [{ displayName: "Kategorie", key: "kategorie" }, { displayName: "Aussage 1", key: "aussage_eins" }, { displayName: "Aussage 2", key: "aussage_zwei" }, { displayName: "Kommentar", key: "kommentar" }, { displayName: "Grafik", key: "grafik_url" }, { displayName: "", key: "actions" }];
 
 const allRows = ref([
-    { id: 1, kategorie: "Der Himmel ist blau.", aussage_eins: "Allgemein", aussage_zwei: "", bearbeiter: "Aktiv", grafik_url: "", kommentar: "" },
+    { id: 1, kategorie: "Allgemein", aussage_eins: "Allgemein", aussage_zwei: "", bearbeiter: "Aktiv", grafik_url: "", kommentar: "" },
     { id: 2, kategorie: "Wasser friert bei 0 C.", aussage_eins: "Wissenschaft", aussage_zwei: "Allgemein", bearbeiter: "Aktiv", grafik_url: "", kommentar: "" },
     { id: 3, kategorie: "Die Erde ist flach.", aussage_eins: "Mythos", aussage_zwei: "Allgemein", bearbeiter: "Inaktiv", grafik_url: "", kommentar: "" },
 ]);
@@ -48,6 +51,13 @@ const deleteRow = (row) => {
     selectedRows.value = selectedRows.value.filter((item) => item.id !== row.id);
 };
 
+watch(
+    () => route.query.kategorie,
+    (kategorie) => {
+        selectedKategorie.value = typeof kategorie === "string" ? kategorie : "";
+    },
+    { immediate: true },
+);
 function getOptionsBy(field) {
     const options = new Set();
     allRows.value.forEach((row) => {
@@ -65,7 +75,7 @@ function getOptionsBy(field) {
             <div class="flex margin-bottom-20 gap-5">
                 <div class="relative">
                     <select name="kategorie" id="kategorie-select" v-model="selectedKategorie"
-                        class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm">
+                        class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm">
                         <option value="">Alle Kategorien</option>
                         <option v-for="option in getOptionsBy('kategorie')" :key="option" :value="option">{{ option }}
                         </option>
@@ -80,7 +90,7 @@ function getOptionsBy(field) {
                 </div>
                 <div class="relative">
                     <select name="bearbeiter" id="bearbeiter-select" v-model="selectedBearbeiter"
-                        class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm">
+                        class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm">
                         <option value="" class="bg-white">Alle Bearbeiter</option>
                         <option v-for="option in getOptionsBy('bearbeiter')" :key="option" :value="option">{{ option }}
                         </option>
@@ -102,8 +112,8 @@ function getOptionsBy(field) {
                     Importieren
                 </button>
 
-                <button class="rounded-lg bg-blue-500 px-4 py-2 text-white" @click="showStatementModal = true">
-                    Aussage hinzufügen
+                <button class="rounded-lg cursor-pointer border border-main-blue bg-main-blue px-4 py-2 font-semibold text-white transition hover:brightness-95" @click="showStatementModal = true">
+                    Aussagenpaar hinzufügen
                 </button>
                 <!-- End Modal state : Mostafa -->
 
@@ -151,3 +161,7 @@ function getOptionsBy(field) {
 
     </div>
 </template>
+
+
+
+

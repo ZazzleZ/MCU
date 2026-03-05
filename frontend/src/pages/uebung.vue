@@ -128,7 +128,7 @@ function getOptionsBy(field) {
             id="kategorie-select"
             v-model="selectedKategorie"
             name="kategorie"
-            class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
+            class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
           >
             <option value="">Alle Kategorien</option>
             <option v-for="option in getOptionsBy('kategorie')" :key="option" :value="option">{{ option }}</option>
@@ -144,7 +144,7 @@ function getOptionsBy(field) {
             id="bearbeiter-select"
             v-model="selectedBearbeiter"
             name="bearbeiter"
-            class="min-w-52 appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
+            class="min-w-52 cursor-pointer appearance-none rounded-xl border border-slate-300 bg-white pl-4 pr-11 py-2.5 text-sm font-medium outline-none transition focus:border-blue-500 shadow-sm"
           >
             <option value="">Alle Bearbeiter</option>
             <option v-for="option in getOptionsBy('bearbeiter')" :key="option" :value="option">{{ option }}</option>
