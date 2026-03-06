@@ -277,18 +277,41 @@ function fileToDataUrl(file) {
   });
 }
 
+// async function uploadGraphic(evt) {
+//   const file = evt.target.files?.[0];
+//   if (!file) return;
+
+//   // Für Vorschau – optional: direkt DataURL (besser für spätere Persistenz als blob:)
+//   try {
+//     const dataUrl = await fileToDataUrl(file);
+//     grafik_url.value = dataUrl;
+//   } catch {
+//     // Fallback: ObjectURL (nur Preview)
+//     const objectUrl = URL.createObjectURL(file);
+//     grafik_url.value = objectUrl;
+//   }
+// }
+
 async function uploadGraphic(evt) {
-  const file = evt.target.files?.[0];
+  const file = evt.target.files[0];
   if (!file) return;
 
-  // Für Vorschau – optional: direkt DataURL (besser für spätere Persistenz als blob:)
+  const formData = new FormData();
+  formData.append("file", file);
+
   try {
-    const dataUrl = await fileToDataUrl(file);
-    grafik_url.value = dataUrl;
-  } catch {
-    // Fallback: ObjectURL (nur Preview)
-    const objectUrl = URL.createObjectURL(file);
-    grafik_url.value = objectUrl;
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    // URL zum gespeicherten File
+    grafik_url.value = `${API_BASE}/${data.path}`;
+
+  } catch (err) {
+    console.error("Upload Fehler:", err);
   }
 }
 

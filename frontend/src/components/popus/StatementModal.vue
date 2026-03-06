@@ -91,8 +91,8 @@
 
         <!-- Vorschau -->
         <div v-if="grafik_url" class="mt-3">
-          grafik_url
-        </div>
+  <img :src="grafik_url" class="max-h-40 rounded-lg border" />
+</div>
       </div>
 
       <!-- Footer -->
@@ -193,15 +193,36 @@ onMounted(async () => {
 });
 
 /* ------------------------------ Grafik Upload ------------------------------ */
-function uploadGraphic(evt) {
+// function uploadGraphic(evt) {
+//   const file = evt.target.files[0];
+//   if (!file) return;
+
+//   const url = URL.createObjectURL(file);
+//   grafik_url.value = url;
+//   localStorage.setItem("uploadedGraphic", url);
+// }
+async function uploadGraphic(evt) {
   const file = evt.target.files[0];
   if (!file) return;
 
-  const url = URL.createObjectURL(file);
-  grafik_url.value = url;
-  localStorage.setItem("uploadedGraphic", url);
-}
+  const formData = new FormData();
+  formData.append("file", file);
 
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    // URL zum gespeicherten File
+    grafik_url.value = `${API_BASE}/${data.path}`;
+
+  } catch (err) {
+    console.error("Upload Fehler:", err);
+  }
+}
 /* ------------------------------ Modal schließen ------------------------------ */
 const close = () => emit("update:modelValue", false);
 
