@@ -30,6 +30,16 @@ async def list_aussagenpaare():
         aussagenpaare.append({"id": str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"}})
     return convert_objectid_to_str(aussagenpaare)
 
+@router.get("/aussagenpaare/{aussagenpaar_id}")
+async def get_aussagenpaar(aussagenpaar_id: str):
+    if not ObjectId.is_valid(aussagenpaar_id):
+        raise HTTPException(status_code=400, detail="Ungültige ID")
+    doc = await db["aussagenpaare"].find_one({"_id": ObjectId(aussagenpaar_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Aussagenpaar nicht gefunden")
+    response = {"id": str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"}}
+    return convert_objectid_to_str(response)
+
 @router.delete("/aussagenpaare/{aussagenpaar_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_aussagenpaar(aussagenpaar_id: str):
     if not ObjectId.is_valid(aussagenpaar_id):
