@@ -17,13 +17,13 @@
         </div>
       </div>
 
-      <!-- Hinweis, falls pairId fehlt (nur Hinweis; kein Blocker) -->
+      <!-- Hinweis, falls pairId fehlt (jetzt Blocker) -->
       <div
         v-if="!effectivePairId"
         class="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm"
       >
-        Es ist keine <strong>pairId</strong> gesetzt. Aussagen werden gespeichert,
-        das <strong>Paar</strong> wird jedoch <u>nicht</u> aktualisiert.
+        Es ist keine <strong>pairId</strong> gesetzt. Speichern ist nicht möglich,
+        da das Backend <code>aussagenpaar_id</code> verlangt.
       </div>
 
       <!-- Aussagen -->
@@ -106,7 +106,7 @@
 
         <!-- Vorschau -->
         <div v-if="grafik_url" class="mt-3">
-          grafik_url
+          {{ grafik_url }}
         </div>
 
         <!-- Grafik löschen -->
@@ -121,12 +121,12 @@
           Abbrechen
         </button>
 
-        <!-- WICHTIG: nicht mehr disabled, wenn pairId fehlt -->
+        <!-- Speichern nur möglich, wenn pairId vorhanden ist -->
         <button
           class="rounded-lg bg-[#538fc6] px-6 py-2 text-white inline-flex items-center gap-2 disabled:opacity-60"
           @click="save"
-          :disabled="saving || hasEmptyTexts"
-          title="Speichert Aussagen (und das Paar, falls pairId vorhanden ist)."
+          :disabled="saving || hasEmptyTexts || !effectivePairId"
+          title="Speichert Aussagen (Paar-Zuordnung erforderlich)."
         >
           <svg v-if="saving" class="h-4 w-4 animate-spin" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none"/>
@@ -168,9 +168,9 @@ const saving = ref(false);
 const feedback = reactive({ type: "", message: "" });
 
 /* ------------------------------ Computed / Hilfen ------------------------------ */
-const effectivePairId = computed(() => props.pairId || props.pair?.id || "");
+const effectivePairId = computed(() => (props.pairId || props.pair?.id || "").toString().trim());
 
-// Nur noch Blocker: leere Texte
+// Blocker: leere Texte
 const hasEmptyTexts = computed(() => localStatements.some(s => !s.text || !s.text.trim()));
 
 // Kürzere Anzeige
@@ -231,7 +231,7 @@ function syncFromProps() {
     0,
     localStatements.length,
     ...props.statements.map(s => ({
-      id: s.id ?? "",
+      id: (s.id ?? "").toString().trim(),
       text: s.text ?? "",
       correct: !!s.correct
     }))
@@ -268,32 +268,8 @@ watch(() => props.pair, () => {
 });
 
 /* ------------------------------ Grafik Upload ------------------------------ */
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Datei konnte nicht gelesen werden."));
-    reader.onload = () => resolve(reader.result);
-    reader.readAsDataURL(file);
-  });
-}
-
-// async function uploadGraphic(evt) {
-//   const file = evt.target.files?.[0];
-//   if (!file) return;
-
-//   // Für Vorschau – optional: direkt DataURL (besser für spätere Persistenz als blob:)
-//   try {
-//     const dataUrl = await fileToDataUrl(file);
-//     grafik_url.value = dataUrl;
-//   } catch {
-//     // Fallback: ObjectURL (nur Preview)
-//     const objectUrl = URL.createObjectURL(file);
-//     grafik_url.value = objectUrl;
-//   }
-// }
-
 async function uploadGraphic(evt) {
-  const file = evt.target.files[0];
+  const file = evt.target.files?.[0];
   if (!file) return;
 
   const formData = new FormData();
@@ -307,11 +283,16 @@ async function uploadGraphic(evt) {
 
     const data = await res.json();
 
+    if (!data?.path) {
+      throw new Error("Upload-Antwort unvollständig (path fehlt).");
+    }
+
     // URL zum gespeicherten File
     grafik_url.value = `${API_BASE}/${data.path}`;
-
   } catch (err) {
     console.error("Upload Fehler:", err);
+    feedback.type = "error";
+    feedback.message = "Upload fehlgeschlagen: " + (err?.message || "Unbekannter Fehler");
   }
 }
 
@@ -320,16 +301,28 @@ function removeGraphic() {
 }
 
 /* ------------------------------ API: Aussagen Upsert ------------------------------ */
+function ensurePairIdOrThrow() {
+  const pid = effectivePairId.value;
+  if (!pid) {
+    throw new Error("pairId fehlt (aussagenpaar_id ist erforderlich).");
+  }
+  return pid;
+}
+
 /**
  * Erstellt eine Aussage (POST /aussagen).
- * Erwartet vom Backend eine Antwort mit { id, aussage, loesung, ... }.
  */
 async function createStatement(statement) {
+  const pairId = ensurePairIdOrThrow();
   const payload = {
     aussage: statement.text,
     loesung: !!statement.correct,
-    erstellungsdatum: new Date().toISOString()
+    erstellungsdatum: new Date().toISOString(),
+    // Backend verlangt: aussagenpaar_id MUSS im Body sein (nicht undefined lassen!)
+    aussagenpaar_id: pairId
   };
+  // Debug (optional):
+  // console.debug("POST /aussagen payload", payload);
   return await postJson(`${API_BASE}/aussagen`, payload);
 }
 
@@ -337,12 +330,23 @@ async function createStatement(statement) {
  * Aktualisiert eine Aussage (PATCH /aussagen/{aussage_id})
  */
 async function patchStatement(statement) {
+  const pairId = ensurePairIdOrThrow();
+  const sid = (statement.id ?? "").toString().trim();
+  if (!sid) {
+    // Harte Validierung, damit Backend nicht erneut 422 wirft
+    throw new Error("Aussage-ID fehlt für PATCH (id ist im Body erforderlich).");
+  }
   const payload = {
     aussage: statement.text,
     loesung: !!statement.correct,
-    aenderungsdatum: new Date().toISOString()
+    aenderungsdatum: new Date().toISOString(),
+    // Backend verlangt id im Body (zusätzlich zur URL)
+    id: sid,
+    // Backend verlangt Paarbezug (muss als String vorhanden sein)
+    aussagenpaar_id: pairId
   };
-  return await patchJson(`${API_BASE}/aussagen/${statement.id}`, payload);
+  // console.debug("PATCH /aussagen payload", payload);
+  return await patchJson(`${API_BASE}/aussagen/${sid}`, payload);
 }
 
 /**
@@ -350,7 +354,8 @@ async function patchStatement(statement) {
  * Gibt stets die finale ID zurück.
  */
 async function upsertStatement(s) {
-  if (s.id) {
+  const hasId = !!(s.id && s.id.toString().trim().length > 0);
+  if (hasId) {
     const res = await patchStatement(s);
     return res?.id || s.id;
   } else {
@@ -377,10 +382,17 @@ async function save() {
   feedback.message = "";
   feedback.type = "";
 
-  // Nur blocken, wenn Texte leer sind
+  // Blocker: leere Texte
   if (hasEmptyTexts.value) {
     feedback.type = "error";
     feedback.message = "Bitte alle Aussagen ausfüllen.";
+    return;
+  }
+
+  // Blocker: fehlende pairId (Backend verlangt aussagenpaar_id)
+  if (!effectivePairId.value) {
+    feedback.type = "error";
+    feedback.message = "Speichern nicht möglich: Es ist keine pairId gesetzt (aussagenpaar_id ist erforderlich).";
     return;
   }
 
@@ -391,25 +403,16 @@ async function save() {
     const finalIds = [];
     for (const s of localStatements) {
       const id = await upsertStatement(s);
-      if (!id) {
-        throw new Error("Backend lieferte keine ID für eine Aussage zurück.");
-      }
+      if (!id) throw new Error("Backend lieferte keine ID für eine Aussage zurück.");
       s.id = id; // local state aktualisieren (neu erstellte IDs setzen)
       finalIds.push(id);
     }
 
-    // 2) Paar patchen, falls pairId vorhanden
-    let updatedPair = null;
-    if (effectivePairId.value) {
-      updatedPair = await patchPair(effectivePairId.value, finalIds);
+    // 2) Paar patchen
+    const updatedPair = await patchPair(effectivePairId.value, finalIds);
 
-      feedback.type = "success";
-      feedback.message = "Aussagen und Paar erfolgreich aktualisiert.";
-    } else {
-      // Kein Paar-Update möglich → trotzdem Erfolg für Aussagen
-      feedback.type = "warn";
-      feedback.message = "Aussagen gespeichert. Paar nicht aktualisiert (keine pairId).";
-    }
+    feedback.type = "success";
+    feedback.message = "Aussagen und Paar erfolgreich aktualisiert.";
 
     // Emit nach außen (neue IDs sind gesetzt)
     emit("saved", {
@@ -420,8 +423,15 @@ async function save() {
     // Bei Erfolg Modal schließen (kurz warten, damit Nutzer Feedback sieht)
     setTimeout(close, 900);
   } catch (err) {
+    const msg = String(err?.message || "");
     feedback.type = "error";
-    feedback.message = err?.message || "Unbekannter Fehler beim Speichern.";
+    if (msg.includes("aussagenpaar_id")) {
+      feedback.message = "Fehler: pairId fehlt (aussagenpaar_id ist erforderlich).";
+    } else if (msg.includes('"id"') || msg.toLowerCase().includes("aussage-id fehlt")) {
+      feedback.message = "Fehler: Backend verlangt 'id' im PATCH-Body.";
+    } else {
+      feedback.message = "Speichern fehlgeschlagen. Details: " + msg;
+    }
     console.error("Speichern fehlgeschlagen:", err);
   } finally {
     saving.value = false;
