@@ -58,13 +58,41 @@
         </div>
       </div>
 
-      <!-- Grafik Upload -->
+      <!-- Grafik Upload (modernes Design) -->
       <div class="mb-4">
         <label class="font-semibold">Grafik</label>
-        <input type="file" accept="image/*" @change="uploadGraphic" />
-        <div v-if="grafik_url" class="mt-2 text-xs text-gray-500 truncate">
-          Gespeichert: {{ grafik_url }}
-        </div>
+
+        <!-- Click/Drop Zone -->
+        <label
+          class="mt-2 flex flex-col items-center justify-center w-full h-32
+                 border-2 border-dashed border-[#538fc6] rounded-xl cursor-pointer
+                 hover:border-blue-400 hover:bg-blue-50/30 transition group"
+        >
+          <div class="flex flex-col items-center gap-2 pointer-events-none px-4">
+            <!-- Upload Icon -->
+            <svg class="w-10 h-10 text-[#538fc6] group-hover:text-blue-500 transition" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 16V4m0 0l-4 4m4-4l4 4M6 20h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z" />
+            </svg>
+
+            <span class="text-sm text-gray-600 group-hover:text-blue-600 transition text-center">
+              Klicke zum Auswählen oder Datei hierher ziehen
+            </span>
+
+            <!-- Dateiname/URL -->
+            <span v-if="grafik_url" class="text-xs text-gray-500 truncate max-w-[280px]">
+              {{ grafik_url }}
+            </span>
+          </div>
+
+          <!-- Hidden Input -->
+          <input type="file" accept="image/*" class="hidden" @change="uploadGraphic" />
+        </label>
+
+        <!-- Vorschau -->
+        <div v-if="grafik_url" class="mt-3">
+  <img :src="grafik_url" class="max-h-40 rounded-lg border" />
+</div>
       </div>
 
       <!-- Footer -->
@@ -89,7 +117,6 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { reactive, ref, onMounted } from "vue";
 
@@ -101,9 +128,7 @@ const emit = defineEmits(["update:modelValue", "save", "saved"]);
 
 const API_BASE = "http://127.0.0.1:8000";
 
-/* ------------------------------
-   Lokale reactive Aussagenliste
---------------------------------*/
+/* ------------------------------ Lokale Aussagenliste ------------------------------ */
 const localStatements = reactive(
   JSON.parse(JSON.stringify(props.statements)).map(s => ({
     text: s.text || "",
@@ -111,9 +136,7 @@ const localStatements = reactive(
   }))
 );
 
-/* ------------------------------
-   Form-States
---------------------------------*/
+/* ------------------------------ Form States ------------------------------ */
 const kommentar = ref("");
 const kategorie = ref("");
 const grafik_url = ref(localStorage.getItem("uploadedGraphic") || "");
@@ -122,9 +145,7 @@ const kategorien = ref([]);
 const saving = ref(false);
 const feedback = reactive({ type: "", message: "" });
 
-/* ------------------------------
-   Hilfsfunktion für POST
---------------------------------*/
+/* ------------------------------ Helpers ------------------------------ */
 async function postJson(url, body) {
   const res = await fetch(url, {
     method: "POST",
@@ -133,25 +154,35 @@ async function postJson(url, body) {
   });
 
   let data = null;
-  try {
-    data = await res.json();
-  } catch {}
+  try { data = await res.json(); } catch {}
 
   if (!res.ok) {
-    const msg =
-      data?.detail ||
-      data?.message ||
-      `Fehler (HTTP ${res.status})`;
-
-    throw new Error(msg);
+    const msg = data?.detail || data?.message || `Fehler (HTTP ${res.status})`;
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
-
   return data;
 }
 
-/* ------------------------------
-   Kategorien beim Start laden
---------------------------------*/
+async function patchJson(url, body) {
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch {}
+
+  if (!res.ok) {
+    // Detail-Text ausgeben, damit man Schema-Fehler sieht
+    let detail = "";
+    try { detail = await res.text(); } catch {}
+    throw new Error(detail || `Fehler (HTTP ${res.status})`);
+  }
+  return data;
+}
+
+/* ------------------------------ Kategorien laden ------------------------------ */
 onMounted(async () => {
   try {
     const res = await fetch(`${API_BASE}/kategorien`);
@@ -161,36 +192,64 @@ onMounted(async () => {
   }
 });
 
-/* ------------------------------
-   Grafik Vorschau & Speicherung
---------------------------------*/
-function uploadGraphic(evt) {
+/* ------------------------------ Grafik Upload ------------------------------ */
+// function uploadGraphic(evt) {
+//   const file = evt.target.files[0];
+//   if (!file) return;
+
+//   const url = URL.createObjectURL(file);
+//   grafik_url.value = url;
+//   localStorage.setItem("uploadedGraphic", url);
+// }
+async function uploadGraphic(evt) {
   const file = evt.target.files[0];
   if (!file) return;
 
-  const url = URL.createObjectURL(file);
-  grafik_url.value = url;
-  localStorage.setItem("uploadedGraphic", url);
-}
+  const formData = new FormData();
+  formData.append("file", file);
 
-/* ------------------------------
-   Modal schließen
---------------------------------*/
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    // URL zum gespeicherten File
+    grafik_url.value = `${API_BASE}/${data.path}`;
+
+  } catch (err) {
+    console.error("Upload Fehler:", err);
+  }
+}
+/* ------------------------------ Modal schließen ------------------------------ */
 const close = () => emit("update:modelValue", false);
 
-/* ------------------------------
-   SPEICHERN: Paar + Aussagen
-// --------------------------------*/
+/* ------------------------------ Paar-Update: PATCH mit kompletter Ressource ------------------------------ */
+/** 
+ * Dein Backend verlangt im PATCH-Body: id, kategorie, bearbeiter, grafik_url, kommentar, aussagen
+ * (siehe 422-Detail in deiner Konsole).
+ * Deshalb senden wir HIER die komplette Ressource mit den neuen aussagen-IDs.
+ */
+async function updatePairAussagenMitVollerRessource(pairId, aussagenIds, pairSnapshot) {
+  // pairSnapshot ist die Antwort vom Create; falls dort etwas fehlt, nehmen wir die aktuellen Form-Werte.
+  const fullPayload = {
+    id: pairId,
+    aussagen: aussagenIds, // NUR IDs!
+    kategorie: Array.isArray(pairSnapshot?.kategorie) && pairSnapshot.kategorie.length
+      ? pairSnapshot.kategorie
+      : [kategorie.value],
+    bearbeiter: pairSnapshot?.bearbeiter ?? "Mostafa",
+    grafik_url: pairSnapshot?.grafik_url ?? grafik_url.value,
+    kommentar: pairSnapshot?.kommentar ?? kommentar.value
+  };
 
+  // Wichtig: PATCH (PUT ist bei dir 405 → nicht erlaubt)
+  return await patchJson(`${API_BASE}/aussagenpaare/${pairId}`, fullPayload);
+}
 
-
-
-// ... dein bestehender Code oben bleibt unverändert ...
-
-// const STATEMENTS_ENDPOINT = `${API_BASE}/aussage`; 
-// Falls dein Backend den pluralen Endpoint nutzt, einfach so ändern:
- const STATEMENTS_ENDPOINT = `${API_BASE}/aussagen`;
-
+/* ------------------------------ SPEICHERN ------------------------------ */
 async function save() {
   feedback.message = "";
   feedback.type = "";
@@ -201,7 +260,6 @@ async function save() {
     feedback.message = "Bitte eine Kategorie auswählen.";
     return;
   }
-
   if (localStatements.some(s => !s.text.trim())) {
     feedback.type = "error";
     feedback.message = "Bitte alle Aussagen ausfüllen.";
@@ -209,75 +267,70 @@ async function save() {
   }
 
   saving.value = true;
-
-  // 1) Aussagen (lokal) vorbereiten
   const nowIso = new Date().toISOString();
-  const preparedStatements = localStatements.map(s => ({
-    aussage: s.text.trim(),
-    loesung: !!s.correct,
-    aenderungsdatum: nowIso
-  }));
 
-  // 2) Payload für das Paar (MIT Aussagen)
+  // 1) Paar zuerst LEER anlegen
   const pairPayload = {
-    aussagen: preparedStatements, // <-- jetzt mit Aussagen
+    aussagen: [], // leer starten
     kategorie: [kategorie.value],
     bearbeiter: "Mostafa",
     grafik_url: grafik_url.value,
     kommentar: kommentar.value
   };
 
+  let pairId = null;
+  const createdStatementIds = [];
+
   try {
-    /* -------- 1. Aussagenpaar speichern -------- */
-    const pairData = await postJson(
-      `${API_BASE}/aussagenpaare`,
-      pairPayload
-    );
+    /* -------- 1. Aussagenpaar erstellen -------- */
+    const pairData = await postJson(`${API_BASE}/aussagenpaare`, pairPayload);
+    pairId = pairData.id;
+    if (!pairId) throw new Error("Fehlende ID des gespeicherten Aussagenpaars.");
 
-    const pairId = pairData.id;
-    if (!pairId) {
-      throw new Error("Fehlende ID des gespeicherten Aussagenpaars.");
+    /* -------- 2. Aussagen einzeln erstellen -------- */
+    for (const s of localStatements) {
+      const stmt = await postJson(`${API_BASE}/aussagen`, {
+        aussagenpaar_id: pairId,
+        aussage: s.text.trim(),
+        loesung: !!s.correct,
+        aenderungsdatum: nowIso
+      });
+
+      if (!stmt?.id) throw new Error("Aussage-ID fehlt in der Antwort.");
+      createdStatementIds.push(stmt.id);
     }
 
-    /* -------- 2. Aussagen speichern (nachdem Paar existiert) -------- */
-    const results = await Promise.allSettled(
-      preparedStatements.map(s =>
-        postJson(STATEMENTS_ENDPOINT, {
-          aussagenpaar_id: pairId,
-          aussage: s.aussage,
-          loesung: s.loesung,
-          aenderungsdatum: s.aenderungsdatum
-        })
-      )
+    /* -------- 3. Paar PATCHEN → komplette Ressource, nur aussagen=IDs -------- */
+    const updatedPair = await updatePairAussagenMitVollerRessource(
+      pairId,
+      createdStatementIds,
+      pairData
     );
-
-    // Prüfen ob Fehler bei einer Aussage
-    const rejected = results.find(r => r.status === "rejected");
-    if (rejected) {
-      // Paar zurückrollen, damit keine verwaisten Datensätze entstehen
-      try {
-        await fetch(`${API_BASE}/aussagenpaare/${pairId}`, { method: "DELETE" });
-      } catch {
-        // Falls Rollback fehlschlägt, trotzdem originalen Fehler anzeigen
-      }
-      throw new Error(
-        rejected.reason?.message || "Eine Aussage konnte nicht gespeichert werden."
-      );
-    }
 
     /* -------- Erfolg -------- */
     feedback.type = "success";
     feedback.message = "Erfolgreich gespeichert.";
 
     emit("saved", {
-      pair: pairData,
-      statements: results.map(r => r.value) // Rückgaben der Einzel-POSTs
+      pair: { ...updatedPair, aussagen: createdStatementIds },
+      statements: createdStatementIds.map(id => ({ id }))
     });
 
     setTimeout(close, 900);
+
   } catch (err) {
+    // Rollback: Paar löschen, wenn es existiert
+    try {
+      if (pairId) {
+        await fetch(`${API_BASE}/aussagenpaare/${pairId}`, { method: "DELETE" });
+      }
+    } catch {}
+
     feedback.type = "error";
-    feedback.message = err.message || "Unbekannter Fehler beim Speichern.";
+    // err.message kann bereits der JSON-Detail-Text (422) sein → direkt anzeigen
+    feedback.message = err?.message || "Unbekannter Fehler beim Speichern.";
+    console.error("Speichern fehlgeschlagen:", err);
+
   } finally {
     saving.value = false;
   }
