@@ -70,7 +70,7 @@
             v-if="row.grafik_url"
             :src="row.grafik_url"
             alt="Grafik Preview"
-            class="absolute left-[60px] top-0 bg-white border border-gray-200 p-1 rounded shadow-lg z-50 w-[200px] h-auto opacity-0 group-hover:opacity-100 transition-opacity"
+            class="absolute right-[60px] top-0 bg-white border border-gray-200 p-1 rounded shadow-lg z-50 w-[200px] h-auto opacity-0 group-hover:opacity-100 transition-opacity"
           />
         </div>
       </template>
